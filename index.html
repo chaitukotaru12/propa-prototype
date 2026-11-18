@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ProPa: contract-to-invoice control prototype</title>
+<meta name="description" content="Prototype: Digital Contract IDs on every budget line, vendor invoicing against tagged lines, approver visibility and finance reconciliation for clinical outsourcing.">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">Pro<span>Pa</span></div>
+  <div class="tagline">Every contract line, from signature to payment &middot; prototype on synthetic data</div>
+  <button class="btn ghost" data-act="reset">Reset demo</button>
+</header>
+<nav id="tabs" class="tabs" aria-label="Roles"></nav>
+<div id="progress" class="progress" aria-label="Progress"></div>
+<main id="view"></main>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<noscript><p style="padding:24px">This prototype needs JavaScript.</p></noscript>
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="js/sample.js"></script>
+<script src="js/grid.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
