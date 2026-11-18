@@ -2,12 +2,15 @@
 
 **Every contract line, from signature to payment.**
 
-ProPa gives every line of a contract's budget grid a permanent **Digital Contract ID** before the contract is signed. Vendors can then invoice only against those IDs, approvers see exactly which contract line each charge belongs to and what is left on it, and finance reconciles without anyone matching invoices by hand. It works the same way for FSO, FSP and hybrid agreements, because every SOW or contract carries a budget grid.
+ProPa gives every line of a contract's budget grid a permanent **Digital Contract ID** before the contract is signed. Every invoice line is then tied to one of those IDs, either quoted by the vendor or mapped by ProPa from the vendor's own invoice, so approvers see exactly which contract line each charge belongs to and what is left on it, and over-billing on a single line can't hide inside a PO total. It works alongside existing PO and payment systems such as Ariba, and the same way for FSO, FSP and hybrid agreements, because every SOW or contract carries a budget grid.
 
-**Live demo:** see the GitHub Pages link in this repository's About section (or open `index.html` locally)
-**Demo video (90 s):** [docs/propa-demo.mp4](docs/propa-demo.mp4)
+**Live demos:** the Streamlit app and the GitHub Pages prototype are linked in this repository's About section (or run them locally, below).
 
-> Prototype for discussion only. All studies, vendors and figures are synthetic. Data stays in your browser.
+**Demo video (about 2 min):** [docs/propa-demo.mp4](docs/propa-demo.mp4): tagging the SOW, mapping an invoice, the PM decision, and how ProPa connects to the Ariba PO
+
+**Common question:** [How does ProPa connect to the PO in Ariba without disturbing existing systems?](docs/ariba-po-integration.md)
+
+> Prototype for discussion only. All studies, vendors and figures are synthetic. Uploaded files are processed in your session and not stored.
 
 ## Two demos in this repository
 
