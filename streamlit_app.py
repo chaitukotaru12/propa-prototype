@@ -32,12 +32,43 @@ SAMPLE_HISTORY = {"Project start-up built": 8, "Site initiation visits": 40, "Pr
 DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 XLSX_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
-st.set_page_config(page_title="ProPa · Digital Contract IDs", layout="wide")
+ASSETS = HERE / "assets"
+st.set_page_config(page_title="ProPa · Procurement to Payment", page_icon=str(ASSETS / "propa-mark.svg"), layout="wide")
+st.logo(str(ASSETS / "propa-logo.svg"), icon_image=str(ASSETS / "propa-mark.svg"), size="large")
 st.markdown("""<style>
-.block-container{padding-top:2.2rem;max-width:1200px}
-.step{font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#1f5fd6;margin-bottom:-.4rem}
+:root{--pp-navy:#0f1420;--pp-blue:#1f5fd6;--pp-sky:#5b8ef0;--pp-amber:#f0a64b}
+.block-container{padding-top:3.6rem;max-width:1200px}
+[data-testid=stMetric]{height:100%}
+/* brand header */
+.pp-hero{position:relative;overflow:hidden;border-radius:18px;padding:30px 36px 28px;margin:0 0 1.6rem;
+  background:radial-gradient(1200px 300px at 100% 0%,rgba(91,142,240,.35),transparent 60%),linear-gradient(120deg,#0f1420 0%,#14244d 70%,#1a3378 100%);color:#fff}
+.pp-hero:after{content:"";position:absolute;right:-60px;top:-60px;width:260px;height:260px;border-radius:50%;border:38px solid rgba(240,166,75,.12)}
+.pp-row{display:flex;align-items:center;gap:18px}
+.pp-mark{width:58px;height:58px;flex:0 0 auto}
+.pp-word{font-size:3rem;font-weight:800;letter-spacing:-.04em;line-height:1}
+.pp-word span{color:var(--pp-sky)}
+.pp-exp{font-size:.82rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#aeb7c6;margin-top:6px}
+.pp-exp b{color:var(--pp-amber);font-weight:800}
+.pp-tag{font-size:1.45rem;font-weight:600;margin:20px 0 6px;letter-spacing:-.01em}
+.pp-sub{color:#c9d0dc;font-size:1rem;max-width:780px;line-height:1.55}
+.pp-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.pp-chip{font-size:.82rem;font-weight:600;padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#e8ecf3}
+.pp-chip i{font-style:normal;color:var(--pp-amber);margin-right:6px}
+/* steps */
+.step{display:inline-flex;align-items:center;gap:8px;font-size:.76rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--pp-blue);background:#eaf0fc;border-radius:999px;padding:4px 12px 4px 4px;margin:1.2rem 0 -.2rem}
+.step b{background:var(--pp-blue);color:#fff;border-radius:999px;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:.72rem}
+h1,h2,h3{letter-spacing:-.015em}
+[data-testid=stMetric]{background:#f7f9fd;border:1px solid #e3e9f5;border-left:4px solid var(--pp-blue);border-radius:12px;padding:12px 16px}
+.stButton button[kind=primary],.stDownloadButton button[kind=primary]{background:var(--pp-blue);border-color:var(--pp-blue)}
+.stButton button[kind=primary]:hover{background:#174cb0;border-color:#174cb0}
+[data-testid=stSidebar]{background:linear-gradient(180deg,#f3f6fc 0%,#ffffff 100%);border-right:1px solid #e3e9f5}
+.pp-side-tag{color:#5a6475;font-size:.88rem;margin:-.3rem 0 .6rem}
+.pp-foot{margin-top:2.5rem;padding-top:1rem;border-top:1px solid #e3e9f5;color:#7c879a;font-size:.82rem}
+.pp-foot b{color:var(--pp-navy)} .pp-foot span{color:var(--pp-blue);font-weight:700}
 .fp{font-family:ui-monospace,Menlo,Consolas,monospace;background:#eef3fd;padding:1px 6px;border-radius:5px}
 </style>""", unsafe_allow_html=True)
+MARK_SVG = (ASSETS / "propa-mark.svg").read_text()
 
 
 def money(x: float) -> str:
@@ -71,8 +102,7 @@ def build_outputs(name: str, data: bytes, kind: str, table_index: int, header_ro
 
 # ---------------- sidebar ----------------
 with st.sidebar:
-    st.markdown("## Pro**Pa**")
-    st.caption("Every contract line, from signature to payment.")
+    st.markdown('<div class="pp-side-tag">Every contract line, from signature to payment.</div>', unsafe_allow_html=True)
     st.markdown("**How it works**")
     st.markdown("1. Upload the final SOW or contract, before signature.\n"
                 "2. ProPa finds the budget grid and checks its totals.\n"
@@ -89,7 +119,15 @@ with st.sidebar:
     st.caption("Prototype on synthetic data. Uploaded files are processed in memory for your session only and are not stored.")
 
 # ---------------- step 1: upload ----------------
-st.title("Tag a contract's budget grid")
+st.markdown(f"""<div class="pp-hero">
+  <div class="pp-row"><div class="pp-mark">{MARK_SVG}</div>
+    <div><div class="pp-word">Pro<span>Pa</span></div><div class="pp-exp"><b>Pro</b>curement to <b>Pa</b>yment</div></div></div>
+  <div class="pp-tag">Every contract line, from signature to payment.</div>
+  <div class="pp-sub">Tag each budget line of a SOW with a Digital Contract ID before signature, then check every vendor invoice line against it.</div>
+  <div class="pp-chips"><span class="pp-chip"><i>&#9679;</i>Digital Contract IDs</span><span class="pp-chip"><i>&#9679;</i>Line-level invoice checks</span>
+  <span class="pp-chip"><i>&#9679;</i>Works alongside Ariba</span><span class="pp-chip"><i>&#9679;</i>Synthetic data only</span></div>
+</div>""", unsafe_allow_html=True)
+st.header("Tag a contract's budget grid")
 st.write("Upload the final SOW or contract with its agreed budget grid. ProPa gives every budget line a permanent "
          "**Digital Contract ID** and writes it into the contract, so every later invoice line can be traced, checked and reconciled.")
 
@@ -124,7 +162,7 @@ if not found["ok"]:
     st.stop()
 
 # ---------------- step 2: grid found ----------------
-st.markdown('<div class="step">Step 1</div>', unsafe_allow_html=True)
+st.markdown('<div class="step"><b>1</b>Step 1</div>', unsafe_allow_html=True)
 st.subheader("Budget grid found in the contract")
 lines = found["lines"]
 total_ok = found["declared"] is not None and abs(found["declared"] - found["sum"]) <= 0.01
@@ -148,7 +186,7 @@ with st.expander("Budget grid as it appears in the contract, with no IDs", expan
                                 "No. of Units": st.column_config.NumberColumn(format="localized")})
 
 # ---------------- step 3: details and tagging ----------------
-st.markdown('<div class="step">Step 2</div>', unsafe_allow_html=True)
+st.markdown('<div class="step"><b>2</b>Step 2</div>', unsafe_allow_html=True)
 st.subheader("Contract details")
 st.caption("Read from the contract where possible. Correct anything before assigning IDs.")
 a, b, c = st.columns(3)
@@ -189,7 +227,7 @@ if tg["prefix"] != prefix or tg["clause"] != clause:
     st.info("Details changed since tagging. Click **Assign Digital Contract IDs** again to update the outputs.")
 
 # ---------------- step 4: tagged output ----------------
-st.markdown('<div class="step">Step 3</div>', unsafe_allow_html=True)
+st.markdown('<div class="step"><b>3</b>Step 3</div>', unsafe_allow_html=True)
 st.subheader("Digital Contract IDs assigned")
 doc, doc_name, xlsx, js, check = build_outputs(
     name, data, contract["kind"], found["table"]["index"], found["header_row"], found["cols"]["desc"],
@@ -221,7 +259,7 @@ def read_invoice(iname: str, idata: bytes):
     return M.parse_invoice(ic), M.invoice_meta(ic, iname)
 
 
-st.markdown('<div class="step">Step 4</div>', unsafe_allow_html=True)
+st.markdown('<div class="step"><b>4</b>Step 4</div>', unsafe_allow_html=True)
 st.subheader("Map a vendor invoice to the IDs")
 st.caption("The vendor's invoice quotes only the PO number and its own descriptions. ProPa matches each line to its Digital Contract ID "
            "using the description, unit price and unit type, shows why, and checks what is left on that line. The PM confirms anything uncertain.")
@@ -333,5 +371,5 @@ d2.download_button("Download mapped invoice (.xlsx)", buf.getvalue(), f"{imeta['
 if learned:
     st.caption(f"{len(learned)} vendor phrasings remembered in this session.")
 
-st.divider()
-st.caption("ProPa prototype · synthetic data · not legal or financial advice. The invoicing clause is sample wording for your legal team to review.")
+st.markdown('<div class="pp-foot"><b>Pro<span>Pa</span></b> &middot; Procurement to Payment &middot; prototype on synthetic data &middot; '
+            'not legal or financial advice. The invoicing clause is sample wording for your legal team to review.</div>', unsafe_allow_html=True)
