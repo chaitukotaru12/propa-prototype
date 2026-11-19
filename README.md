@@ -35,8 +35,8 @@ To publish it, sign in at [share.streamlit.io](https://share.streamlit.io) with 
 
 | Step | Who | What happens in ProPa |
 | --- | --- | --- |
-| 1. Run the draft | Outsourcing manager | Once both parties agree to go for signature, the draft's budget grid (.xlsx, .xls or .csv) is run through ProPa. It finds the grid, reads sections and line items, checks each total against unit price × units and the grid's total row, and assigns a Digital Contract ID to every line. |
-| 2. Lock and execute | Outsourcing manager | IDs are locked and the grid is fingerprinted. The tagged grid can be downloaded for the contract's budget appendix. Before execution is recorded, the executed copy can be checked line for line against what was tagged; any change blocks execution. |
+| 1. Run the draft | Procurement team | Once both parties agree to go for signature, the draft's budget grid (.xlsx, .xls or .csv) is run through ProPa. It finds the grid, reads sections and line items, checks each total against unit price × units and the grid's total row, and assigns a Digital Contract ID to every line. |
+| 2. Lock and execute | Procurement team | IDs are locked and the grid is fingerprinted. The tagged grid can be downloaded for the contract's budget appendix. Before execution is recorded, the executed copy can be checked line for line against what was tagged; any change blocks execution. |
 | 3. Invoice in the portal | Vendor | The vendor raises invoices inside ProPa by entering units against its contracted lines. Unit prices come from the contract, and a line cannot be billed beyond its remaining units. Work outside the contract cannot be invoiced; it needs a change order. |
 | 4. Approve or deny | Sponsor approver (PM) | Each invoice arrives verified: study, contract, execution, IDs, contracted prices and balances. For every line the approver sees what was contracted, what was approved before and what will be left, then approves or denies with a reason the vendor can see. |
 | 5. Pay and reconcile | Finance | Finance pays exactly the approved lines and sees every contract line's balance. Contract value = paid + approved not yet paid + awaiting approval + remaining. |
@@ -51,7 +51,7 @@ Everything is written to an audit log: who did what, and when.
 ## Try it
 
 1. Open the live demo, or download this repository and open `index.html` in Chrome, Edge or Firefox. There is no build step and no server.
-2. **Outsourcing manager:** click **Use the sample draft**, or upload `samples/ONC-2026-017_Meridian_SOW-01_draft_budget.xlsx`. Click **Confirm and lock IDs**, then **Record execution**. To see the executed-copy check fail, upload `samples/..._executed_CHANGED.xlsx` there; the matching copy is `samples/..._executed_budget.xlsx`.
+2. **Procurement team:** click **Use the sample draft**, or upload `samples/ONC-2026-017_Meridian_SOW-01_draft_budget.xlsx`. Click **Confirm and lock IDs**, then **Record execution**. To see the executed-copy check fail, upload `samples/..._executed_CHANGED.xlsx` there; the matching copy is `samples/..._executed_budget.xlsx`.
 3. **Vendor portal:** enter units on a few lines. Try more units than remain to see the block. Submit.
 4. **Approver:** approve lines, or deny one with a reason.
 5. **Finance:** record the payment, check the reconciliation and download it as CSV.
