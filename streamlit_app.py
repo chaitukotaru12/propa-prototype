@@ -17,6 +17,7 @@ import streamlit as st
 from propa import documents as D
 from propa import grid as G
 from propa import matching as M
+from propa import review as R
 
 HERE = Path(__file__).parent
 SAMPLES = HERE / "samples"
@@ -108,7 +109,8 @@ with st.sidebar:
                 "2. ProPa finds the budget grid and checks its totals.\n"
                 "3. Every line item gets a Digital Contract ID.\n"
                 "4. Download the tagged SOW and send it for signature.\n"
-                "5. Upload a vendor invoice: ProPa maps each line to its ID and checks what is left.")
+                "5. Upload a vendor invoice: ProPa maps each line to its ID and checks what is left.\n"
+                "6. Review the executed contract and the invoice side by side, then approve.")
     st.markdown("**Sample SOW, no IDs**")
     st.download_button("Word version", SAMPLE_DOCX.read_bytes(), SAMPLE_DOCX.name, DOCX_MIME, use_container_width=True)
     st.download_button("PDF version", SAMPLE_PDF.read_bytes(), SAMPLE_PDF.name, "application/pdf", use_container_width=True)
@@ -353,6 +355,50 @@ st.dataframe(pd.DataFrame([{"Digital Contract ID": b_["id"], "Task": b_["task"],
              hide_index=True, use_container_width=True,
              column_config={"Amount": st.column_config.NumberColumn(format="dollar"), "Approve": st.column_config.NumberColumn(format="dollar"),
                             "Hold": st.column_config.NumberColumn(format="dollar")})
+
+# ---------------- side-by-side review ----------------
+st.markdown('<div class="step"><b>5</b>Step 5</div>', unsafe_allow_html=True)
+st.subheader("Review the evidence side by side")
+st.caption("Pick an invoice line. ProPa opens the executed SOW at the budget line it is linked to, next to the vendor's invoice, "
+           "so the PM can check the evidence without searching folders or trackers.")
+st.markdown(R.CSS, unsafe_allow_html=True)
+opts = [f'Line {r["n"]} · {r["desc"]} → {cid or NONE}' for r, cid in mapped]
+price_of = {l["id"]: l["price"] for l in clines}
+first_flag = next((i for i, (r, cid) in enumerate(mapped) if cid and abs(r["rate"] - price_of[cid]) > 0.005),
+                  next((i for i, (r, cid) in enumerate(mapped) if cid is None or cid in bad), 0))
+pick = st.selectbox("Invoice line to review", opts, index=first_flag, key=f"rev_{key}_{ihash}")
+r_sel, cid_sel = mapped[opts.index(pick)]
+cl_sel = next((l for l in clines if l["id"] == cid_sel), None)
+b_sel = next((b_ for b_ in bal if b_["id"] == cid_sel), None)
+if b_sel and cl_sel:
+    rate_bad = abs(r_sel["rate"] - cl_sel["price"]) > 0.005
+    left_bad = b_sel["left"] < 0
+    cells = [("Contracted units", f'{b_sel["contracted"]:,.0f}', ""), ("Billed before", f'{b_sel["before"]:,.0f}', ""),
+             ("On this invoice", f'{b_sel["this"]:,.0f}', ""), ("Left after", f'{b_sel["left"]:,.0f}', "bad" if left_bad else "good"),
+             ("Contract rate / invoiced", f'{money(cl_sel["price"])} / {money(r_sel["rate"])}', "bad" if rate_bad else "good"),
+             ("Approve / hold on this ID", f'{money(b_sel["approvable"])} / {money(b_sel["held"])}', "bad" if b_sel["held"] > 0 else "good")]
+    st.markdown('<div class="pp-check">' + "".join(f'<div class="{c}"><small>{a}</small><b>{v}</b></div>' for a, v, c in cells) + "</div>",
+                unsafe_allow_html=True)
+    others = [r["n"] for r, cid in mapped if cid == cid_sel and r["n"] != r_sel["n"]]
+    if others:
+        st.caption(f"Invoice line{'s' if len(others) > 1 else ''} {', '.join(map(str, others))} also bill{'' if len(others) > 1 else 's'} "
+                   f"{cid_sel}, so the unit and amount checks cover all of them together.")
+elif cid_sel is None:
+    st.error(f'"{r_sel["desc"]}" ({money(r_sel["amount"])}) does not match any line in the executed SOW. Hold it for a change order or credit note.')
+rv_l, rv_r = st.columns([1.3, 1], gap="medium")
+with rv_l:
+    st.markdown("**Executed contract**")
+    st.markdown(R.contract_html(clines, tg["meta"], tg["fp"], cid_sel, doc_name, po_number), unsafe_allow_html=True)
+with rv_r:
+    st.markdown("**Vendor invoice**")
+    st.markdown(f'<div class="pp-inv-bar"><span>&#129534; {iname}</span><span>Line {r_sel["n"]} highlighted</span></div>', unsafe_allow_html=True)
+    png = R.invoice_page_png(idata, r_sel["desc"]) if iname.lower().endswith(".pdf") else None
+    if png:
+        st.image(png, use_container_width=True)
+    else:
+        st.dataframe(table[["#", "Invoice line", "Qty", "Rate", "Amount"]].style.apply(
+            lambda row: ["background-color:#ffe39a" if row["#"] == r_sel["n"] else "" for _ in row], axis=1),
+            hide_index=True, use_container_width=True)
 
 d1, d2 = st.columns(2)
 if d1.button("Confirm mapping and remember this wording", type="primary", use_container_width=True, key=f"learn_{key}_{ihash}"):
