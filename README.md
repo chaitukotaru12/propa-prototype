@@ -6,7 +6,7 @@ ProPa gives every line of a contract's budget grid a permanent **Digital Contrac
 
 **Live demos:** the Streamlit app and the GitHub Pages prototype are linked in this repository's About section (or run them locally, below).
 
-**Demo video (about 2 min):** [docs/propa-demo.mp4](docs/propa-demo.mp4): tagging the SOW, mapping an invoice, the side-by-side review, the PM decision, and how ProPa connects to the Ariba PO
+**Demo video (about 3 min, with voice-over):** [docs/propa-demo.mp4](docs/propa-demo.mp4): tagging the SOW, mapping an invoice, the side-by-side review, the PM decision, reconciliation, and how ProPa connects to the Ariba PO
 
 **Common question:** [How does ProPa connect to the PO in Ariba without disturbing existing systems?](docs/ariba-po-integration.md)
 
@@ -18,6 +18,7 @@ ProPa gives every line of a contract's budget grid a permanent **Digital Contrac
    - Upload a final SOW or contract (.docx, .pdf, .xlsx or .csv) that has a budget grid and no IDs. ProPa finds the grid inside the contract, checks the totals, assigns a Digital Contract ID to every line and returns the SOW with the IDs written into its budget table, plus an ID register (.xlsx, and .json for P2P/ERP).
    - Then upload a vendor invoice that quotes only the SOW's single PO number and its own descriptions. ProPa maps each invoice line to its Digital Contract ID using the description, unit price and unit type, explains every match, and checks what is left on each line. It shows the difference between a PO-level check (the sample invoice passes) and ProPa's line-level check (two lines over contract, one price difference and one charge outside the contract). The PM confirms uncertain matches, and confirmed wording is remembered for the next invoice.
    - Before approving, the PM can review any invoice line side by side: the executed SOW's budget grid with the linked Digital Contract ID highlighted, next to the vendor's invoice PDF with that line highlighted, plus the line's units, rate check and approve/hold amounts.
+   - The PM records the decision (approve / hold). **Reconcile** reads every approval recorded against the SOW's Digital Contract IDs and shows, line by line, what has been approved, what is on hold and what is left, with a check that approved plus left equals the contract value. The reconciliation downloads as .xlsx.
    - Samples in `samples/`: a SOW with no IDs (.docx, .pdf) and a vendor invoice with no IDs (.pdf, .xlsx). Parties and figures are fictional.
 2. **Browser prototype: the full loop** (`index.html`). Tagging, execution check, vendor invoicing, approval, payment and reconciliation.
 

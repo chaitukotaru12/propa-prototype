@@ -110,7 +110,8 @@ with st.sidebar:
                 "3. Every line item gets a Digital Contract ID.\n"
                 "4. Download the tagged SOW and send it for signature.\n"
                 "5. Upload a vendor invoice: ProPa maps each line to its ID and checks what is left.\n"
-                "6. Review the executed contract and the invoice side by side, then approve.")
+                "6. Review the executed contract and the invoice side by side, then approve.\n"
+                "7. Reconcile at any time: approved, on hold and left, line by line.")
     st.markdown("**Sample SOW, no IDs**")
     st.download_button("Word version", SAMPLE_DOCX.read_bytes(), SAMPLE_DOCX.name, DOCX_MIME, use_container_width=True)
     st.download_button("PDF version", SAMPLE_PDF.read_bytes(), SAMPLE_PDF.name, "application/pdf", use_container_width=True)
@@ -400,8 +401,17 @@ with rv_r:
             lambda row: ["background-color:#ffe39a" if row["#"] == r_sel["n"] else "" for _ in row], axis=1),
             hide_index=True, use_container_width=True)
 
-d1, d2 = st.columns(2)
-if d1.button("Confirm mapping and remember this wording", type="primary", use_container_width=True, key=f"learn_{key}_{ihash}"):
+# ---------------- record decision, learn wording ----------------
+ledgers = st.session_state.setdefault("ledgers", {})
+ledger = ledgers.setdefault(key, {})          # invoice no -> recorded PM decision
+inv_no = imeta["invoice_no"] or iname
+d1, d2, d3 = st.columns(3)
+if d1.button("Record PM decision (approve / hold)", type="primary", use_container_width=True, key=f"rec_{key}_{ihash}"):
+    ledger[inv_no] = {"approved": {b_["id"]: (b_["approvable"] / price_of[b_["id"]] if price_of[b_["id"]] else 0, b_["approvable"]) for b_ in bal},
+                      "held": {b_["id"]: b_["held"] for b_ in bal if b_["held"] > 0},
+                      "held_outside": held_unmapped, "total": pinv["sum"], "period": imeta["period"]}
+    st.toast(f"{inv_no} recorded: {money(ok_amt)} approved, {money(held)} on hold.")
+if d2.button("Confirm mapping and remember this wording", use_container_width=True, key=f"learn_{key}_{ihash}"):
     for r, cid in mapped:
         if cid:
             learned[M.norm_phrase(r["desc"])] = cid
@@ -413,9 +423,62 @@ out = pd.DataFrame([{"Invoice": imeta["invoice_no"], "PO": imeta["po"], "Line": 
                      "Status": "not in contract" if cid is None else bad.get(cid, {}).get("status", "within contract")} for r, cid in mapped])
 buf = io.BytesIO()
 out.to_excel(buf, index=False)
-d2.download_button("Download mapped invoice (.xlsx)", buf.getvalue(), f"{imeta['invoice_no'] or 'invoice'}_mapped.xlsx", XLSX_MIME, use_container_width=True)
+d3.download_button("Download mapped invoice (.xlsx)", buf.getvalue(), f"{imeta['invoice_no'] or 'invoice'}_mapped.xlsx", XLSX_MIME, use_container_width=True)
+if inv_no in ledger:
+    st.success(f"PM decision for {inv_no} recorded: {money(ledger[inv_no]['total'] - sum(ledger[inv_no]['held'].values()) - ledger[inv_no]['held_outside'])} approved, "
+               f"{money(sum(ledger[inv_no]['held'].values()) + ledger[inv_no]['held_outside'])} on hold.")
 if learned:
     st.caption(f"{len(learned)} vendor phrasings remembered in this session.")
+
+# ---------------- step 6: reconcile ----------------
+st.markdown('<div class="step"><b>6</b>Step 6</div>', unsafe_allow_html=True)
+st.subheader("Reconcile the contract")
+st.caption("Whenever the PM wants, ProPa reads every approval recorded against this SOW's Digital Contract IDs and shows, line by line, "
+           "what has been approved, what is on hold and what is left. No tracker to update.")
+if st.button("Reconcile", type="primary", key=f"recon_{key}"):
+    st.session_state[f"recon_{key}_on"] = True
+if st.session_state.get(f"recon_{key}_on"):
+    sources = []
+    appr_u = {l["id"]: 0.0 for l in clines}; appr_amt = {l["id"]: 0.0 for l in clines}; held_amt = {l["id"]: 0.0 for l in clines}
+    held_out = 0.0
+    if billed_before:
+        for cid, u in billed_before.items():
+            appr_u[cid] += u; appr_amt[cid] += u * price_of[cid]
+        sources.append("earlier invoices on this SOW (synthetic history)")
+    for inv_k, rec in ledger.items():
+        for cid, (u, amt) in rec["approved"].items():
+            appr_u[cid] += u; appr_amt[cid] += amt
+        for cid, h in rec["held"].items():
+            held_amt[cid] += h
+        held_out += rec["held_outside"]
+        sources.append(inv_k)
+    cv = sum(l["total"] for l in clines)
+    ta = round(sum(appr_amt.values()), 2); th = round(sum(held_amt.values()) + held_out, 2); tl = round(cv - ta, 2)
+    r1, r2, r3, r4 = st.columns(4)
+    r1.metric("Contract value", money(cv))
+    r2.metric("Approved to date", money(ta), f"{ta / cv:.0%} of contract", delta_color="off", delta_arrow="off")
+    r3.metric("On hold", money(th), "not counted against the contract", delta_color="off", delta_arrow="off")
+    r4.metric("Left to bill", money(tl), f"{tl / cv:.0%} of contract", delta_color="off", delta_arrow="off")
+    if ledger:
+        st.caption("Read from: " + "; ".join(sources) + f". Check: approved {money(ta)} + left {money(tl)} = contract value {money(cv)}.")
+    else:
+        st.warning(f"No PM decision recorded yet for {inv_no}, so it is not included. Click **Record PM decision** above, then **Reconcile** again. "
+                   "Read from: " + ("; ".join(sources) if sources else "no approvals yet") + ".")
+    recon = pd.DataFrame([{"Digital Contract ID": l["id"], "Task": l["desc"], "Contracted units": l["units"],
+                           "Units approved": round(appr_u[l["id"]], 2), "Units left": round(l["units"] - appr_u[l["id"]], 2),
+                           "Contract value": l["total"], "Approved": round(appr_amt[l["id"]], 2), "On hold": round(held_amt[l["id"]], 2),
+                           "Left": round(l["total"] - appr_amt[l["id"]], 2), "Used": appr_amt[l["id"]] / l["total"] if l["total"] else 0} for l in clines])
+    if held_out:
+        recon.loc[len(recon)] = {"Digital Contract ID": "Not in contract", "Task": "Charges with no contract line", "Contracted units": 0,
+                                 "Units approved": 0, "Units left": 0, "Contract value": 0.0, "Approved": 0.0, "On hold": held_out, "Left": 0.0, "Used": 0.0}
+    st.dataframe(recon, hide_index=True, use_container_width=True,
+                 column_config={c: st.column_config.NumberColumn(format="dollar") for c in ["Contract value", "Approved", "On hold", "Left"]}
+                 | {"Used": st.column_config.ProgressColumn("Used", format="percent", min_value=0, max_value=1),
+                    "Contracted units": st.column_config.NumberColumn(format="localized"),
+                    "Units approved": st.column_config.NumberColumn(format="localized"), "Units left": st.column_config.NumberColumn(format="localized")})
+    rb = io.BytesIO()
+    recon.to_excel(rb, index=False)
+    st.download_button("Download reconciliation (.xlsx)", rb.getvalue(), f"{tg['prefix']}_reconciliation.xlsx", XLSX_MIME)
 
 st.markdown('<div class="pp-foot"><b>Pro<span>Pa</span></b> &middot; Procurement to Payment &middot; prototype on synthetic data &middot; '
             'not legal or financial advice. The invoicing clause is sample wording for your legal team to review.</div>', unsafe_allow_html=True)
