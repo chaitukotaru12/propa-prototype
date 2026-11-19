@@ -1,5 +1,5 @@
 /* ProPa prototype: contract-to-invoice control loop.
-   Outsourcing manager tags the agreed budget grid -> contract executed with the tagged grid
+   Procurement team tags the agreed budget grid -> contract executed with the tagged grid
    -> vendor invoices only against tagged lines -> approver sees each bucket -> finance pays and reconciles.
    State lives in the browser (localStorage). Synthetic data only. */
 (function () {
@@ -34,7 +34,7 @@
   }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* storage unavailable */ } }
   let S = load();
-  const ROLE = { om: 'Outsourcing manager', vp: 'Vendor', ap: 'Approver', fi: 'Finance', sys: 'ProPa' };
+  const ROLE = { om: 'Procurement team', vp: 'Vendor', ap: 'Approver', fi: 'Finance', sys: 'ProPa' };
   function log(role, text) { S.log.unshift({ t: new Date().toISOString(), role, text }); }
 
   /* ---------- derived figures ---------- */
@@ -70,7 +70,7 @@
   };
 
   /* ---------- shell ---------- */
-  const TABS = [['om', 'Outsourcing manager', 'Sponsor'], ['vp', 'Vendor portal', 'CRO or vendor'], ['ap', 'Approver', 'Sponsor PM'], ['fi', 'Finance', 'Payables and reconciliation'], ['log', 'Audit log', 'Everyone']];
+  const TABS = [['om', 'Procurement team', 'Sponsor'], ['vp', 'Vendor portal', 'CRO or vendor'], ['ap', 'Approver', 'Sponsor PM'], ['fi', 'Finance', 'Payables and reconciliation'], ['log', 'Audit log', 'Everyone']];
   function renderTabs() {
     $('#tabs').innerHTML = TABS.map(([k, label, who]) =>
       `<button data-tab="${k}" class="${S.ui.tab === k ? 'on' : ''}"><span>${label}</span><small>${who}</small></button>`).join('');
@@ -110,7 +110,7 @@
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   }
 
-  /* ---------- 1. outsourcing manager ---------- */
+  /* ---------- 1. procurement team ---------- */
   function vOM() {
     const f = S.ui.form;
     const field = (k, label, ph) => `<label class="fld"><span>${label}</span><input data-field="${k}" id="om-${k}" value="${esc(f[k])}" placeholder="${ph || ''}"></label>`;
@@ -209,7 +209,7 @@
   function vVendor() {
     const exec = S.contracts.filter(c => c.status === 'executed');
     let html = head('Raise an invoice', 'Vendors invoice inside ProPa, against the lines of their executed contract. Unit prices come from the contract, and no line can be billed beyond what is left on it.');
-    if (!exec.length) return html + `<section class="card"><p class="empty">No executed contracts yet. The outsourcing manager runs the draft, locks the IDs and records execution first.</p></section>`;
+    if (!exec.length) return html + `<section class="card"><p class="empty">No executed contracts yet. The procurement team runs the draft, locks the IDs and records execution first.</p></section>`;
     const vendors = [...new Set(exec.map(c => c.vendor))];
     if (!vendors.includes(S.ui.vendor)) S.ui.vendor = vendors[0];
     const mine = exec.filter(c => c.vendor === S.ui.vendor);
